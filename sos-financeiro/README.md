@@ -1,19 +1,19 @@
 # SOS Financeiro (React)
 
-React + Vite implementation of the Stitch screens for the SOS Financeiro app:
+Implementação em React + Vite das telas do Stitch do app SOS Financeiro:
 
-- **Início**: safe-to-spend balance, monthly budget pace, and a debt-due alert.
-- **Dívidas**: debt total, filters, priority ordering, and per-debt actions.
-- **Plano**: snowball / avalanche comparison and the payoff projection.
-- **Registrar Gasto**: voice, receipt, and manual entry, with recent entries and undo.
+- **Início**: saldo seguro para gastar, ritmo diário do mês e alerta de vencimento de fatura.
+- **Dívidas**: total em aberto, filtros, ordenação por prioridade e ações por dívida.
+- **Plano**: comparação entre Bola de Neve e Avalanche e projeção da quitação.
+- **Registrar Gasto**: lançamento por voz, comprovante ou manual, com lançamentos recentes e desfazer.
 
 ## Scripts
 
 ```bash
 npm install
-npm run dev     # local dev server
-npm run build   # production build into dist/
-npm run preview # serve the production build
+npm run dev     # servidor de desenvolvimento local
+npm run build   # build de produção em dist/
+npm run preview # serve o build de produção
 ```
 
-Data is mock data in `src/data.js`. Money is stored as integer centavos.
+Os dados são fictícios e ficam em `src/data.js`. Os valores monetários são guardados em centavos (inteiros).

@@ -1,4 +1,4 @@
-// Mock data taken from the Stitch screens. Money is stored as integer centavos.
+// Dados fictícios extraídos das telas do Stitch. Os valores são guardados em centavos (inteiros).
 
 export const RENDA_LIQUIDA = 420000;
 export const CUSTOS_FIXOS = 246000;
@@ -92,7 +92,7 @@ export const PLANO_LIBERDADE = {
   mesesAntes: 4,
 };
 
-// Transcription the voice flow "hears" in the Stitch mock.
+// Transcrição que o fluxo de voz "ouve" no mock do Stitch.
 export const TRANSCRICAO_EXEMPLO = 'Gastei 48 reais e 50 centavos no sacolão com frutas e legumes';
 export const GASTO_EXEMPLO = {
   valor: 4850,
