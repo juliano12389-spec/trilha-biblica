@@ -1,5 +1,6 @@
 import { Decimal } from '../decimal';
 import {
+  addDaysIso,
   daysBetween,
   isIsoDate,
   lotExpiryStatus,
@@ -136,5 +137,13 @@ describe('parseSignedQuantity', () => {
     expect(parseSignedQuantity('0')).toBeNull();
     expect(parseSignedQuantity('')).toBeNull();
     expect(parseSignedQuantity('1,00001')).toBeNull();
+  });
+});
+
+describe('addDaysIso', () => {
+  it('moves across month and year boundaries', () => {
+    expect(addDaysIso('2026-10-27', -30)).toBe('2026-09-27');
+    expect(addDaysIso('2026-01-02', -3)).toBe('2025-12-30');
+    expect(addDaysIso('2026-02-28', 1)).toBe('2026-03-01');
   });
 });

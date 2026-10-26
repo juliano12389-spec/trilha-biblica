@@ -5,8 +5,9 @@ import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native
 
 import { listIngredients } from '../../data/catalog';
 import { listLots } from '../../data/stock';
+import { dashboardSummary } from '../../data/gestao';
 import { BrandHeader, Button, Card, Notice, Pill, Screen, ScreenTitle } from '../../components/ui';
-import { formatDateBr } from '../../domain/format';
+import { formatBRL, formatDateBr } from '../../domain/format';
 import { stockStatus } from '../../domain/ingredient';
 import { lotExpiryStatus, todayIso } from '../../domain/stock';
 import { useAuth } from '../../features/auth/AuthProvider';
@@ -18,6 +19,7 @@ const UPCOMING = [
 ] as const;
 
 const loadIngredients = () => listIngredients();
+const loadSummary = () => dashboardSummary();
 
 export default function InicioScreen() {
   const router = useRouter();
@@ -27,14 +29,17 @@ export default function InicioScreen() {
 
   const ingredients = useLoader(loadIngredients);
   const lots = useLoader(listLots);
+  const summary = useLoader(loadSummary);
   const { reload: reloadIngredients } = ingredients;
   const { reload: reloadLots } = lots;
+  const { reload: reloadSummary } = summary;
 
   useFocusEffect(
     useCallback(() => {
       void reloadIngredients();
       void reloadLots();
-    }, [reloadIngredients, reloadLots]),
+      void reloadSummary();
+    }, [reloadIngredients, reloadLots, reloadSummary]),
   );
 
   const items = useMemo(() => ingredients.data ?? [], [ingredients.data]);
@@ -73,6 +78,24 @@ export default function InicioScreen() {
         <ScreenTitle title={`Olá, ${firstName(fullName)}`} subtitle="Resumo do estoque da pizzaria." />
 
         {loadError ? <Notice tone="error" message={loadError} /> : null}
+
+        {summary.data ? (
+          <Card style={styles.summaryCard}>
+            <Text style={styles.cardTitle}>Hoje</Text>
+            <View style={styles.summaryRow}>
+              <Text style={styles.metricLabel}>Pizzas vendidas</Text>
+              <Text style={styles.summaryValue}>{summary.data.pizzasSoldToday}</Text>
+            </View>
+            <View style={styles.summaryRow}>
+              <Text style={styles.metricLabel}>Faturamento</Text>
+              <Text style={styles.summaryValue}>{formatBRL(summary.data.revenueToday)}</Text>
+            </View>
+            <View style={styles.summaryRow}>
+              <Text style={styles.metricLabel}>Estoque estimado</Text>
+              <Text style={styles.summaryValue}>{formatBRL(summary.data.stockValue)}</Text>
+            </View>
+          </Card>
+        ) : null}
 
         <View style={styles.metrics}>
           <Metric label="Insumos ativos" value={ingredients.data ? items.length : null} />
@@ -159,6 +182,9 @@ function firstName(fullName: string): string {
 
 const styles = StyleSheet.create({
   content: { padding: space.lg, gap: space.lg, paddingBottom: space.xl, paddingTop: space.sm },
+  summaryCard: { gap: space.sm },
+  summaryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  summaryValue: { fontSize: 15, fontWeight: '800', color: colors.text },
   metrics: { flexDirection: 'row', flexWrap: 'wrap', gap: space.md },
   metric: { flexBasis: '47%', flexGrow: 1, gap: space.xs },
   metricLabel: { fontSize: 12, color: colors.textMuted, fontWeight: '600' },

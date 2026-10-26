@@ -161,3 +161,10 @@ export function validateReceiptItem(input: ReceiptItemInput, today: string): Ite
 export function receiptTotal(items: readonly ReceiptItem[]): Decimal {
   return items.reduce((sum, item) => sum.add(item.total), Decimal.ZERO);
 }
+
+/** ISO date `days` before (negative) or after (positive) `iso`. */
+export function addDaysIso(iso: string, days: number): string {
+  const date = new Date(`${iso}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
