@@ -11,6 +11,7 @@ import { decimalPlaces } from '../../domain/stock';
 import { validateRecipeLine } from '../../domain/production';
 import { useLoader } from '../../hooks/useLoader';
 import { colors, space } from '../../theme';
+import { errorMessage } from '../../lib/errors';
 
 const loadIngredients = () => listIngredients();
 
@@ -56,7 +57,7 @@ export default function NovoPreparoScreen() {
       await publishRecipe(recipeId, parsed);
       router.back();
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Não foi possível cadastrar o preparo.');
+      setError(errorMessage(caught, 'Não foi possível cadastrar o preparo.'));
     } finally {
       setSubmitting(false);
     }

@@ -29,6 +29,7 @@ import {
 import { newRequestId } from '../../lib/ids';
 import { useLoader } from '../../hooks/useLoader';
 import { colors, space } from '../../theme';
+import { errorMessage } from '../../lib/errors';
 
 const EMPTY_FORM: IngredientFormInput = {
   name: '',
@@ -111,7 +112,7 @@ export default function NovoInsumoScreen() {
       await createIngredient(result.value, requestId.current);
       router.back();
     } catch (caught) {
-      setFormError(caught instanceof Error ? caught.message : 'Não foi possível cadastrar o insumo.');
+      setFormError(errorMessage(caught, 'Não foi possível cadastrar o insumo.'));
     } finally {
       setSubmitting(false);
     }

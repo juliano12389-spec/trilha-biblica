@@ -1,5 +1,5 @@
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { getSalesMode, setSalesMode } from '../../data/sales';
@@ -8,6 +8,7 @@ import { SALES_MODES, type SalesModeCode } from '../../domain/sales';
 import { useAuth } from '../../features/auth/AuthProvider';
 import { useLoader } from '../../hooks/useLoader';
 import { colors, radius, space } from '../../theme';
+import { errorMessage } from '../../lib/errors';
 
 const loadMode = () => getSalesMode();
 
@@ -16,6 +17,8 @@ export default function ModoVendasScreen() {
   const { state } = useAuth();
   const isAdmin = state.status === 'ready' && state.profile.roleCode === 'administrador';
   const current = useLoader(loadMode);
+  const { reload: reloadMode } = current;
+  useFocusEffect(useCallback(() => void reloadMode(), [reloadMode]));
   const [selected, setSelected] = useState<SalesModeCode | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -33,7 +36,7 @@ export default function ModoVendasScreen() {
       setSaved(true);
       await current.reload();
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Não foi possível mudar o modo.');
+      setError(errorMessage(caught, 'Não foi possível mudar o modo.'));
     } finally {
       setSubmitting(false);
     }

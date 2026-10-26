@@ -10,6 +10,7 @@ import { todayIso } from '../../domain/stock';
 import { useLoader } from '../../hooks/useLoader';
 import { useRequestId } from '../../hooks/useRequestId';
 import { colors, space } from '../../theme';
+import { errorMessage } from '../../lib/errors';
 
 const loadPreparos = () => listPreparoRecipes();
 
@@ -64,7 +65,7 @@ export default function ProducaoPreparoScreen() {
       );
       router.back();
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Não foi possível registrar o preparo.');
+      setError(errorMessage(caught, 'Não foi possível registrar o preparo.'));
     } finally {
       setSubmitting(false);
     }

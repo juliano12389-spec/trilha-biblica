@@ -13,6 +13,7 @@ import { Decimal } from '../../domain/decimal';
 import { useLoader } from '../../hooks/useLoader';
 import { useRequestId } from '../../hooks/useRequestId';
 import { colors, radius, space } from '../../theme';
+import { errorMessage } from '../../lib/errors';
 
 const loadProducts = () => listProducts();
 
@@ -49,7 +50,16 @@ export default function NovaVendaScreen() {
   const subtotal = saleSubtotal(items.map((item) => ({ unitPrice: item.unitPrice, pizzas: item.pizzas })));
   const discount = validateDiscount(discountText, subtotal);
 
-  const requestId = useRequestId(JSON.stringify({ channel, externalId, payment, discountText, items }));
+  // Decimal values hold BigInts, which JSON cannot serialise, so the key is built from strings.
+  const requestId = useRequestId(
+    JSON.stringify({
+      channel,
+      externalId,
+      payment,
+      discountText,
+      items: items.map((item) => [item.productA, item.productB, item.pizzas, item.unitPrice.toString()]),
+    }),
+  );
 
   function addItem() {
     setItemError(null);
@@ -101,7 +111,7 @@ export default function NovaVendaScreen() {
       await registerSale(requestId, channel, externalId.trim(), items, discount.value, payment, '');
       router.back();
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Não foi possível registrar a venda.');
+      setError(errorMessage(caught, 'Não foi possível registrar a venda.'));
     } finally {
       setSubmitting(false);
     }

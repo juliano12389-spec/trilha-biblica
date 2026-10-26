@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -7,11 +7,14 @@ import { BackLink, Button, Card, Field, Notice, Screen, ScreenTitle } from '../.
 import { validateCancellationReason, validateRecovered } from '../../domain/sales';
 import { useLoader } from '../../hooks/useLoader';
 import { colors, space } from '../../theme';
+import { errorMessage } from '../../lib/errors';
 
 export default function CancelarVendaScreen() {
   const router = useRouter();
   const { saleId, number } = useLocalSearchParams<{ saleId: string; number?: string }>();
   const items = useLoader(useCallback(() => listSaleItems(saleId), [saleId]));
+  const { reload: reloadItems } = items;
+  useFocusEffect(useCallback(() => void reloadItems(), [reloadItems]));
 
   const [reason, setReason] = useState('');
   const [recovered, setRecovered] = useState<Record<string, string>>({});
@@ -37,7 +40,7 @@ export default function CancelarVendaScreen() {
       await cancelSale(saleId, motive.value, counts.value);
       router.back();
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Não foi possível cancelar a venda.');
+      setError(errorMessage(caught, 'Não foi possível cancelar a venda.'));
     } finally {
       setSubmitting(false);
     }

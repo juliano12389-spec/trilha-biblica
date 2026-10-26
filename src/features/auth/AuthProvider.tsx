@@ -3,6 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 
 import { fetchProfile, type Profile } from '../../data/profile';
 import { supabase } from '../../lib/supabase';
+import { errorMessage } from '../../lib/errors';
 
 type AuthState =
   | { status: 'loading' }
@@ -34,7 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       setState({
         status: 'error',
-        message: error instanceof Error ? error.message : 'Não foi possível carregar o seu perfil.',
+        message: errorMessage(error, 'Não foi possível carregar o seu perfil.'),
       });
     }
   }, []);

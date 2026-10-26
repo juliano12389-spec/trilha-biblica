@@ -15,7 +15,7 @@ import { useLoader } from '../../hooks/useLoader';
 import { colors, space } from '../../theme';
 
 const UPCOMING = [
-  { icon: 'stats-chart-outline', title: 'Custos, inventário, perdas e relatórios', phase: 'Fase 5' },
+  { icon: 'shield-checkmark-outline', title: 'Testes de fluxo, segurança, desempenho e publicação Android', phase: 'Fase 6' },
 ] as const;
 
 const loadIngredients = () => listIngredients();

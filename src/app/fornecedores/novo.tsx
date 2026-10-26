@@ -5,6 +5,7 @@ import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from 'react-na
 import { createSupplier } from '../../data/catalog';
 import { BackLink, Button, Card, Field, Notice, Screen, ScreenTitle } from '../../components/ui';
 import { space } from '../../theme';
+import { errorMessage } from '../../lib/errors';
 
 export default function NovoFornecedorScreen() {
   const router = useRouter();
@@ -43,7 +44,7 @@ export default function NovoFornecedorScreen() {
       });
       router.back();
     } catch (caught) {
-      setFormError(caught instanceof Error ? caught.message : 'Não foi possível cadastrar o fornecedor.');
+      setFormError(errorMessage(caught, 'Não foi possível cadastrar o fornecedor.'));
     } finally {
       setSubmitting(false);
     }

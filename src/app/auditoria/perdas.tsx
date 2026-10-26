@@ -12,6 +12,7 @@ import { WASTE_REASONS, validateWaste } from '../../domain/gestao';
 import { useLoader } from '../../hooks/useLoader';
 import { useRequestId } from '../../hooks/useRequestId';
 import { colors, space } from '../../theme';
+import { errorMessage } from '../../lib/errors';
 
 const loadIngredients = () => listIngredients();
 const loadLots = () => listLots();
@@ -22,13 +23,15 @@ export default function PerdasScreen() {
   const ingredients = useLoader(loadIngredients);
   const lots = useLoader(loadLots);
   const waste = useLoader(loadWaste);
+  const { reload: reloadIngredients } = ingredients;
   const { reload: reloadWaste } = waste;
   const { reload: reloadLots } = lots;
   useFocusEffect(
     useCallback(() => {
+      void reloadIngredients();
       void reloadWaste();
       void reloadLots();
-    }, [reloadWaste, reloadLots]),
+    }, [reloadIngredients, reloadWaste, reloadLots]),
   );
 
   const [ingredientId, setIngredientId] = useState<string | null>(null);
@@ -69,7 +72,7 @@ export default function PerdasScreen() {
       await reloadWaste();
       await reloadLots();
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Não foi possível registrar a perda.');
+      setError(errorMessage(caught, 'Não foi possível registrar a perda.'));
     } finally {
       setSubmitting(false);
     }

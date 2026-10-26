@@ -10,6 +10,7 @@ import { todayIso } from '../../domain/stock';
 import { useLoader } from '../../hooks/useLoader';
 import { useRequestId } from '../../hooks/useRequestId';
 import { colors, space } from '../../theme';
+import { errorMessage } from '../../lib/errors';
 
 const loadProducts = () => listProducts();
 
@@ -53,7 +54,7 @@ export default function ProducaoPizzaScreen() {
     try {
       setRequirements(await previewPizzaRequirements(order.value.productA, order.value.productB, order.value.pizzas));
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Não foi possível calcular os ingredientes.');
+      setError(errorMessage(caught, 'Não foi possível calcular os ingredientes.'));
     }
   }
 
@@ -75,7 +76,7 @@ export default function ProducaoPizzaScreen() {
       router.back();
     } catch (caught) {
       // The backend lists every missing ingredient when stock is short; show it as is.
-      setError(caught instanceof Error ? caught.message : 'Não foi possível registrar a produção.');
+      setError(errorMessage(caught, 'Não foi possível registrar a produção.'));
     } finally {
       setSubmitting(false);
     }

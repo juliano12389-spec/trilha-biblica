@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
+import { errorMessage } from '../lib/errors';
 
 export interface LoaderState<T> {
   data: T | null;
@@ -30,7 +31,7 @@ export function useLoader<T>(load: () => Promise<T>): LoaderState<T> {
       }
     } catch (caught) {
       if (call === latestCall.current) {
-        setError(caught instanceof Error ? caught.message : 'Não foi possível carregar os dados.');
+        setError(errorMessage(caught, 'Não foi possível carregar os dados.'));
       }
     } finally {
       if (call === latestCall.current) {

@@ -9,6 +9,7 @@ import { ADJUSTMENT_REASON, lotExpiryStatus, parseSignedQuantity, todayIso } fro
 import { useLoader } from '../hooks/useLoader';
 import { useRequestId } from '../hooks/useRequestId';
 import { colors, space } from '../theme';
+import { errorMessage } from '../lib/errors';
 
 export default function AjusteScreen() {
   const router = useRouter();
@@ -61,7 +62,7 @@ export default function AjusteScreen() {
       await registerAdjustment(lot.lotId, quantity, trimmedReason, requestId);
       router.back();
     } catch (caught) {
-      setFormError(caught instanceof Error ? caught.message : 'Não foi possível registrar o ajuste.');
+      setFormError(errorMessage(caught, 'Não foi possível registrar o ajuste.'));
     } finally {
       setSubmitting(false);
     }

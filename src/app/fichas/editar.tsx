@@ -9,6 +9,7 @@ import { RecipeLinesEditor, type DraftLine } from '../../components/RecipeLinesE
 import { validateRecipeLine } from '../../domain/production';
 import { useLoader } from '../../hooks/useLoader';
 import { colors, space } from '../../theme';
+import { errorMessage } from '../../lib/errors';
 
 // Module-level so the loader keeps a stable identity across renders.
 const loadIngredients = () => listIngredients();
@@ -62,7 +63,7 @@ export default function EditarFichaScreen() {
       await publishRecipe(recipeId, parsed);
       router.back();
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Não foi possível publicar a ficha.');
+      setError(errorMessage(caught, 'Não foi possível publicar a ficha.'));
     } finally {
       setSubmitting(false);
     }

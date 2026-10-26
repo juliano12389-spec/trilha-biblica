@@ -37,7 +37,8 @@
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "test": "jest",
-    "db:test": "scripts/db-test.sh"
+    "db:test": "scripts/db-test.sh",
+    "lint": "expo lint"
   },
   "private": true
 }

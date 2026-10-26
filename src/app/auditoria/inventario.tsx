@@ -12,6 +12,7 @@ import { stockStatus } from '../../domain/ingredient';
 import { useLoader } from '../../hooks/useLoader';
 import { useRequestId } from '../../hooks/useRequestId';
 import { colors, space } from '../../theme';
+import { errorMessage } from '../../lib/errors';
 
 const loadIngredients = () => listIngredients();
 
@@ -68,7 +69,7 @@ export default function InventarioScreen() {
       setReasons({});
       setNotes('');
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Não foi possível enviar a contagem.');
+      setError(errorMessage(caught, 'Não foi possível enviar a contagem.'));
     } finally {
       setSubmitting(false);
     }

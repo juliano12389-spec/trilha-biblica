@@ -18,6 +18,7 @@ import {
 import { useLoader } from '../../hooks/useLoader';
 import { useRequestId } from '../../hooks/useRequestId';
 import { colors, radius, space } from '../../theme';
+import { errorMessage } from '../../lib/errors';
 
 interface ItemDraft {
   ingredientId: string;
@@ -66,7 +67,16 @@ export default function NovoRecebimentoScreen() {
   const [submitting, setSubmitting] = useState(false);
 
   // A retry of unchanged content reuses the id, so it cannot post twice.
-  const requestId = useRequestId(JSON.stringify({ supplierId, documentNumber, receivedOn, notes, items }));
+  // Decimal values hold BigInts, which JSON cannot serialise, so the key is built from strings.
+  const requestId = useRequestId(
+    JSON.stringify({
+      supplierId,
+      documentNumber,
+      receivedOn,
+      notes,
+      items: items.map((item) => [item.ingredientId, item.quantity.toString(), item.unitCost.toString(), item.lotCode, item.manufacturedOn, item.expiresOn]),
+    }),
+  );
 
   const selectedIngredient = (ingredients.data ?? []).find((item) => item.id === itemDraft.ingredientId) ?? null;
   const total = receiptTotal(items);
@@ -138,7 +148,7 @@ export default function NovoRecebimentoScreen() {
       );
       router.back();
     } catch (caught) {
-      setFormError(caught instanceof Error ? caught.message : 'Não foi possível registrar o recebimento.');
+      setFormError(errorMessage(caught, 'Não foi possível registrar o recebimento.'));
     } finally {
       setSubmitting(false);
     }

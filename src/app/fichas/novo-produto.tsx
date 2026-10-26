@@ -6,6 +6,7 @@ import { createProduct } from '../../data/production';
 import { BackLink, Button, Card, Chip, Field, Notice, Screen, ScreenTitle } from '../../components/ui';
 import { PIZZA_SIZES, validateProductDraft, type PizzaSize } from '../../domain/production';
 import { colors, space } from '../../theme';
+import { errorMessage } from '../../lib/errors';
 
 export default function NovoProdutoScreen() {
   const router = useRouter();
@@ -30,7 +31,7 @@ export default function NovoProdutoScreen() {
       await createProduct(result.value);
       router.back();
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Não foi possível cadastrar o sabor.');
+      setError(errorMessage(caught, 'Não foi possível cadastrar o sabor.'));
     } finally {
       setSubmitting(false);
     }
