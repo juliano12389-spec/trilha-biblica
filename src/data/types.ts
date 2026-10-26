@@ -21,6 +21,10 @@ export interface CategoryRow {
 export interface SupplierRow {
   id: string;
   name: string;
+  document: string | null;
+  phone: string | null;
+  email: string | null;
+  notes: string | null;
 }
 
 export interface IngredientRow {
@@ -32,6 +36,7 @@ export interface IngredientRow {
   stock_unit: UnitCode;
   minimum_stock: string | number;
   purchase_unit_cost: string | number;
+  shelf_life_days: number | null;
   is_active: boolean;
   ingredient_categories: { name: string } | null;
 }

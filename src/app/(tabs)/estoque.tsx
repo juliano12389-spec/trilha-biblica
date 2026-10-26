@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { FlatList, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import type { ComponentProps } from 'react';
 
 import { listIngredients, type IngredientListItem } from '../../data/catalog';
 import { BrandHeader, Button, Card, Chip, EmptyState, Notice, Pill, Screen, ScreenTitle } from '../../components/ui';
@@ -57,6 +58,12 @@ export default function EstoqueScreen() {
         aside={<Pill label={`${items.length} ${items.length === 1 ? 'insumo' : 'insumos'}`} tone="neutral" />}
       />
       <Button label="Novo insumo" icon="add" onPress={() => router.push('/insumo/novo')} />
+      <View style={styles.links}>
+        <QuickLink icon="download-outline" label="Recebimento" onPress={() => router.push('/recebimento/novo')} />
+        <QuickLink icon="layers-outline" label="Lotes e validade" onPress={() => router.push('/lotes')} />
+        <QuickLink icon="swap-vertical-outline" label="Movimentações" onPress={() => router.push('/movimentacoes')} />
+        <QuickLink icon="people-outline" label="Fornecedores" onPress={() => router.push('/fornecedores')} />
+      </View>
 
       <View style={styles.searchBox}>
         <Ionicons name="search" size={18} color={colors.textMuted} />
@@ -121,6 +128,23 @@ export default function EstoqueScreen() {
   );
 }
 
+function QuickLink({
+  icon,
+  label,
+  onPress,
+}: {
+  icon: ComponentProps<typeof Ionicons>['name'];
+  label: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} style={styles.link}>
+      <Ionicons name={icon} size={20} color={colors.primary} />
+      <Text style={styles.linkLabel}>{label}</Text>
+    </Pressable>
+  );
+}
+
 function IngredientCard({ item }: { item: IngredientListItem }) {
   const status = stockStatus(item.balance, item.minimumStock);
   const isLow = status === 'abaixo_minimo';
@@ -161,6 +185,21 @@ function IngredientCard({ item }: { item: IngredientListItem }) {
 }
 
 const styles = StyleSheet.create({
+  links: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  link: {
+    flexBasis: '48%',
+    flexGrow: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.sm,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    paddingHorizontal: space.md,
+    minHeight: 48,
+  },
+  linkLabel: { flex: 1, fontSize: 13, fontWeight: '700', color: colors.text },
   list: { paddingHorizontal: space.lg, paddingBottom: space.xl, gap: 0 },
   header: { gap: space.md, paddingTop: space.sm, paddingBottom: space.md },
   searchBox: {

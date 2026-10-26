@@ -57,6 +57,10 @@ for migration in "${migrations[@]}"; do
 done
 
 echo "==> Testes SQL"
-run "$ROOT/supabase/tests/fase1_fundacao.test.sql"
+tests=("$ROOT"/supabase/tests/*.test.sql)
+for test in "${tests[@]}"; do
+  echo "    $(basename "$test")"
+  run "$test"
+done
 
 echo "==> Concluído"

@@ -40,6 +40,10 @@ export function BrandHeader({ subtitle }: { subtitle: string }) {
   );
 }
 
+export function BackLink({ onPress }: { onPress: () => void }) {
+  return <Button label="Voltar" variant="ghost" icon="chevron-back" onPress={onPress} style={styles.backLink} />;
+}
+
 export function ScreenTitle({ title, subtitle, aside }: { title: string; subtitle?: string; aside?: ReactNode }) {
   return (
     <View style={styles.titleRow}>
@@ -192,6 +196,7 @@ export function EmptyState({
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
+  backLink: { alignSelf: 'flex-start', paddingHorizontal: 0, minHeight: 36 },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingHorizontal: space.lg, paddingTop: space.sm },
   brandMark: {
     width: 40,

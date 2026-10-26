@@ -325,13 +325,15 @@ select pg_temp.expect_error(
   $sql$ update public.audit_logs set action = 'alterado' $sql$,
   'imutáveis');
 select pg_temp.expect_error(
-  $sql$ insert into public.stock_movements (organization_id, ingredient_id, movement_type, quantity_delta, unit, balance_before, balance_after, idempotency_key, performed_by)
-        select organization_id, id, 'ajuste_negativo', -100, 'kg', 15, -85, gen_random_uuid(), '11111111-1111-1111-1111-111111111111'
+  $sql$ insert into public.stock_movements (organization_id, ingredient_id, movement_type, quantity_delta, unit, balance_before, balance_after, idempotency_key, performed_by, lot_id)
+        select organization_id, id, 'ajuste_negativo', -100, 'kg', 15, -85, gen_random_uuid(), '11111111-1111-1111-1111-111111111111',
+          (select l.id from public.inventory_lots l where l.ingredient_id = pg_temp.ctx('ing_mussarela'))
         from public.ingredients where id = pg_temp.ctx('ing_mussarela') $sql$,
   'stock_movements_balance_after_check');
 select pg_temp.expect_error(
-  $sql$ insert into public.stock_movements (organization_id, ingredient_id, movement_type, quantity_delta, unit, balance_before, balance_after, idempotency_key, performed_by)
-        select organization_id, id, 'ajuste_negativo', -5, 'kg', 15, 20, gen_random_uuid(), '11111111-1111-1111-1111-111111111111'
+  $sql$ insert into public.stock_movements (organization_id, ingredient_id, movement_type, quantity_delta, unit, balance_before, balance_after, idempotency_key, performed_by, lot_id)
+        select organization_id, id, 'ajuste_negativo', -5, 'kg', 15, 20, gen_random_uuid(), '11111111-1111-1111-1111-111111111111',
+          (select l.id from public.inventory_lots l where l.ingredient_id = pg_temp.ctx('ing_mussarela'))
         from public.ingredients where id = pg_temp.ctx('ing_mussarela') $sql$,
   'stock_movements_balance_consistent');
 

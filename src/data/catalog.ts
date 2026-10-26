@@ -13,6 +13,8 @@ export interface IngredientListItem {
   balance: Decimal;
   minimumStock: Decimal;
   purchaseUnitCost: Decimal;
+  /** null = this ingredient does not control shelf life. */
+  shelfLifeDays: number | null;
 }
 
 /**
@@ -23,7 +25,7 @@ export async function listIngredients(): Promise<IngredientListItem[]> {
   const [ingredientsResult, balancesResult] = await Promise.all([
     supabase
       .from('ingredients')
-      .select('id, sku, name, category_id, purchase_unit, stock_unit, minimum_stock, purchase_unit_cost, is_active, ingredient_categories(name)')
+      .select('id, sku, name, category_id, purchase_unit, stock_unit, minimum_stock, purchase_unit_cost, shelf_life_days, is_active, ingredient_categories(name)')
       .eq('is_active', true)
       .order('name'),
     supabase.from('ingredient_balances').select('ingredient_id, balance'),
@@ -46,6 +48,7 @@ export async function listIngredients(): Promise<IngredientListItem[]> {
     balance: balances.get(row.id) ?? Decimal.ZERO,
     minimumStock: Decimal.of(row.minimum_stock),
     purchaseUnitCost: Decimal.of(row.purchase_unit_cost),
+    shelfLifeDays: row.shelf_life_days,
   }));
 }
 
@@ -56,9 +59,34 @@ export async function listCategories(): Promise<CategoryRow[]> {
 }
 
 export async function listSuppliers(): Promise<SupplierRow[]> {
-  const { data, error } = await supabase.from('suppliers').select('id, name').eq('is_active', true).order('name');
+  const { data, error } = await supabase
+    .from('suppliers')
+    .select('id, name, document, phone, email, notes')
+    .eq('is_active', true)
+    .order('name');
   if (error) throw error;
   return data as SupplierRow[];
+}
+
+export interface SupplierDraft {
+  name: string;
+  /** CPF or CNPJ, digits only. Empty string when not informed. */
+  document: string;
+  phone: string;
+  email: string;
+  notes: string;
+}
+
+export async function createSupplier(draft: SupplierDraft): Promise<string> {
+  const { data, error } = await supabase.rpc('create_supplier', {
+    p_name: draft.name,
+    p_document: draft.document,
+    p_phone: draft.phone,
+    p_email: draft.email,
+    p_notes: draft.notes,
+  });
+  if (error) throw error;
+  return data as string;
 }
 
 /**

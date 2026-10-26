@@ -1,5 +1,5 @@
 import { Decimal } from '../decimal';
-import { formatBRL, formatNumber, formatQuantity } from '../format';
+import { formatBRL, formatDateBr, formatNumber, formatQuantity } from '../format';
 
 describe('pt-BR formatting', () => {
   it('formats currency with a comma decimal mark and dot thousands', () => {
@@ -14,5 +14,13 @@ describe('pt-BR formatting', () => {
   it('formats quantities with their unit', () => {
     expect(formatQuantity(Decimal.of('15'), 'kg')).toBe('15,00 kg');
     expect(formatQuantity(Decimal.of('5000'), 'g', 0)).toBe('5.000 g');
+  });
+});
+
+describe('formatDateBr', () => {
+  it('turns ISO dates into day/month/year', () => {
+    expect(formatDateBr('2026-10-27')).toBe('27/10/2026');
+    expect(formatDateBr('2026-10-27T12:00:00Z')).toBe('27/10/2026');
+    expect(formatDateBr('sem data')).toBe('sem data');
   });
 });

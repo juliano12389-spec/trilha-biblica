@@ -1,21 +1,25 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { listIngredients } from '../../data/catalog';
+import { listLots } from '../../data/stock';
 import { BrandHeader, Button, Card, Notice, Pill, Screen, ScreenTitle } from '../../components/ui';
-import { useAuth } from '../../features/auth/AuthProvider';
+import { formatDateBr } from '../../domain/format';
 import { stockStatus } from '../../domain/ingredient';
+import { lotExpiryStatus, todayIso } from '../../domain/stock';
+import { useAuth } from '../../features/auth/AuthProvider';
 import { useLoader } from '../../hooks/useLoader';
 import { colors, space } from '../../theme';
 
 const UPCOMING = [
-  { icon: 'download-outline', title: 'Recebimentos, lotes e validade', phase: 'Fase 2' },
   { icon: 'restaurant-outline', title: 'Fichas técnicas e produção', phase: 'Fase 3' },
   { icon: 'receipt-outline', title: 'Vendas, cancelamentos e estornos', phase: 'Fase 4' },
   { icon: 'stats-chart-outline', title: 'Custos, inventário, perdas e relatórios', phase: 'Fase 5' },
 ] as const;
+
+const loadIngredients = () => listIngredients();
 
 export default function InicioScreen() {
   const router = useRouter();
@@ -23,17 +27,33 @@ export default function InicioScreen() {
   const organizationName = state.status === 'ready' ? state.profile.organizationName : '';
   const fullName = state.status === 'ready' ? state.profile.fullName : '';
 
-  const ingredients = useLoader(listIngredients);
+  const ingredients = useLoader(loadIngredients);
+  const lots = useLoader(listLots);
   const { reload: reloadIngredients } = ingredients;
+  const { reload: reloadLots } = lots;
 
   useFocusEffect(
     useCallback(() => {
       void reloadIngredients();
-    }, [reloadIngredients]),
+      void reloadLots();
+    }, [reloadIngredients, reloadLots]),
   );
 
-  const items = ingredients.data ?? [];
+  const items = useMemo(() => ingredients.data ?? [], [ingredients.data]);
   const belowMinimum = items.filter((item) => stockStatus(item.balance, item.minimumStock) === 'abaixo_minimo');
+
+  const today = todayIso();
+  const attentionLots = useMemo(
+    () =>
+      (lots.data ?? [])
+        .map((lot) => ({ lot, status: lotExpiryStatus(lot.expiresOn, today) }))
+        .filter(({ status }) => status === 'vencido' || status === 'vence_em_breve')
+        .sort((a, b) => (a.lot.expiresOn ?? '').localeCompare(b.lot.expiresOn ?? '')),
+    [lots.data, today],
+  );
+  const expiredCount = attentionLots.filter(({ status }) => status === 'vencido').length;
+  const soonCount = attentionLots.length - expiredCount;
+  const loadError = ingredients.error ?? lots.error;
 
   return (
     <Screen>
@@ -41,10 +61,11 @@ export default function InicioScreen() {
         contentContainerStyle={styles.content}
         refreshControl={
           <RefreshControl
-            refreshing={ingredients.loading}
+            refreshing={ingredients.loading || lots.loading}
             onRefresh={() => {
               void refreshProfile();
               void reloadIngredients();
+              void reloadLots();
             }}
             tintColor={colors.primary}
           />
@@ -53,30 +74,43 @@ export default function InicioScreen() {
         <BrandHeader subtitle={`${organizationName} • Início`} />
         <ScreenTitle title={`Olá, ${firstName(fullName)}`} subtitle="Resumo do estoque da pizzaria." />
 
-        {ingredients.error ? <Notice tone="error" message={ingredients.error} /> : null}
+        {loadError ? <Notice tone="error" message={loadError} /> : null}
 
         <View style={styles.metrics}>
-          <Card style={styles.metric}>
-            <Text style={styles.metricLabel}>Insumos ativos</Text>
-            <Text style={styles.metricValue}>{ingredients.data ? items.length : '—'}</Text>
-          </Card>
-          <Card style={styles.metric}>
-            <Text style={styles.metricLabel}>Abaixo do mínimo</Text>
-            <Text style={[styles.metricValue, belowMinimum.length > 0 && styles.metricDanger]}>
-              {ingredients.data ? belowMinimum.length : '—'}
-            </Text>
-          </Card>
+          <Metric label="Insumos ativos" value={ingredients.data ? items.length : null} />
+          <Metric label="Abaixo do mínimo" value={ingredients.data ? belowMinimum.length : null} danger={belowMinimum.length > 0} />
+          <Metric label="Lotes vencidos" value={lots.data ? expiredCount : null} danger={expiredCount > 0} />
+          <Metric label="Vencem em 7 dias" value={lots.data ? soonCount : null} warn={soonCount > 0} />
         </View>
+
+        {attentionLots.length > 0 ? (
+          <Card style={styles.alertCard}>
+            <View style={styles.cardHeader}>
+              <Ionicons name="time-outline" size={18} color={colors.danger} />
+              <Text style={styles.cardTitle}>Lotes que pedem atenção</Text>
+            </View>
+            {attentionLots.slice(0, 6).map(({ lot, status }) => (
+              <View key={lot.lotId} style={styles.lotRow}>
+                <View style={styles.lotText}>
+                  <Text style={styles.lotName}>{lot.ingredientName}</Text>
+                  <Text style={styles.lotMeta}>
+                    Lote {lot.lotCode} • vence {formatDateBr(lot.expiresOn ?? '')}
+                  </Text>
+                </View>
+                <Pill label={status === 'vencido' ? 'Vencido' : 'Vence em breve'} tone={status === 'vencido' ? 'danger' : 'warning'} />
+              </View>
+            ))}
+          </Card>
+        ) : null}
 
         {belowMinimum.length > 0 ? (
           <Card style={styles.alertCard}>
             <View style={styles.cardHeader}>
               <Ionicons name="warning-outline" size={18} color={colors.danger} />
-              <Text style={styles.cardTitle}>Alertas de estoque</Text>
-              <Pill label={`${belowMinimum.length}`} tone="danger" />
+              <Text style={styles.cardTitle}>Abaixo do estoque mínimo</Text>
             </View>
-            {belowMinimum.slice(0, 5).map((item) => (
-              <Text key={item.id} style={styles.alertItem}>
+            {belowMinimum.slice(0, 6).map((item) => (
+              <Text key={item.id} style={styles.lotName}>
                 • {item.name}
               </Text>
             ))}
@@ -84,8 +118,8 @@ export default function InicioScreen() {
         ) : null}
 
         <View style={styles.actions}>
-          <Button label="Novo insumo" icon="add" onPress={() => router.push('/insumo/novo')} style={styles.actionButton} />
-          <Button label="Ver estoque" variant="secondary" icon="file-tray-stacked-outline" onPress={() => router.push('/estoque')} style={styles.actionButton} />
+          <Button label="Recebimento" icon="download-outline" onPress={() => router.push('/recebimento/novo')} style={styles.actionButton} />
+          <Button label="Novo insumo" variant="secondary" icon="add" onPress={() => router.push('/insumo/novo')} style={styles.actionButton} />
         </View>
 
         <Card>
@@ -106,21 +140,36 @@ export default function InicioScreen() {
   );
 }
 
+function Metric({ label, value, danger, warn }: { label: string; value: number | null; danger?: boolean; warn?: boolean }) {
+  return (
+    <Card style={styles.metric}>
+      <Text style={styles.metricLabel}>{label}</Text>
+      <Text style={[styles.metricValue, danger && styles.metricDanger, warn && styles.metricWarn]}>
+        {value === null ? '—' : value}
+      </Text>
+    </Card>
+  );
+}
+
 function firstName(fullName: string): string {
   return fullName.trim().split(/\s+/)[0] || 'equipe';
 }
 
 const styles = StyleSheet.create({
   content: { padding: space.lg, gap: space.lg, paddingBottom: space.xl, paddingTop: space.sm },
-  metrics: { flexDirection: 'row', gap: space.md },
-  metric: { flex: 1, gap: space.xs },
+  metrics: { flexDirection: 'row', flexWrap: 'wrap', gap: space.md },
+  metric: { flexBasis: '47%', flexGrow: 1, gap: space.xs },
   metricLabel: { fontSize: 12, color: colors.textMuted, fontWeight: '600' },
-  metricValue: { fontSize: 28, fontWeight: '800', color: colors.text },
+  metricValue: { fontSize: 26, fontWeight: '800', color: colors.text },
   metricDanger: { color: colors.danger },
-  alertCard: { borderColor: colors.dangerSoft },
+  metricWarn: { color: colors.warning },
+  alertCard: { borderColor: colors.dangerSoft, gap: space.md },
   cardHeader: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   cardTitle: { flex: 1, fontSize: 15, fontWeight: '800', color: colors.text },
-  alertItem: { fontSize: 14, color: colors.text },
+  lotRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.md },
+  lotText: { flex: 1, gap: 2 },
+  lotName: { fontSize: 14, fontWeight: '700', color: colors.text },
+  lotMeta: { fontSize: 12, color: colors.textMuted },
   actions: { flexDirection: 'row', gap: space.md },
   actionButton: { flex: 1 },
   upcomingRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingVertical: space.xs },

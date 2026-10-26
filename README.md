@@ -4,7 +4,7 @@ Aplicativo Android (Expo + React Native + TypeScript) com backend Supabase (Post
 para controlar o estoque de uma pizzaria: insumos, unidades, validade, movimentações e, nas próximas
 fases, recebimentos, fichas técnicas, produção, vendas, inventário e custos.
 
-**Status:** Fase 1 — Fundação (em andamento neste ciclo). Veja [Fases](#fases).
+**Status:** Fase 1 (Fundação) e Fase 2 (Estoque) concluídas. Veja [Fases](#fases).
 
 ## Regras centrais
 
@@ -53,7 +53,10 @@ As migrações ficam em `supabase/migrations/` e devem ser aplicadas em ordem, u
 - Pelo SQL Editor do painel do Supabase, colando o arquivo; ou
 - com a CLI: `supabase link --project-ref <ref>` e depois `supabase db push`.
 
-A migração da Fase 1 é `20261026120000_fase1_fundacao.sql`.
+Migrações, nesta ordem:
+
+1. `20261026120000_fase1_fundacao.sql` — organizações, perfis, insumos, livro de movimentações.
+2. `20261027120000_fase2_estoque.sql` — recebimentos, lotes, ajustes, custo médio e saldo por lote.
 
 ## Testes
 
@@ -71,9 +74,14 @@ Cobertura atual:
 
 - **Domínio (Jest):** aritmética decimal, conversões (inclui o Teste 7: 5 kg = 5.000 g), validação do
   cadastro de insumo e formatação pt-BR.
-- **Banco (SQL):** cadastro com saldo inicial, idempotência de reenvio, validação de fatores, Teste 7 no
+- **Domínio (Jest):** também validade de lotes, média ponderada, validação de recebimento e de ajuste.
+- **Banco (SQL, Fase 1):** cadastro com saldo inicial, idempotência de reenvio, validação de fatores, Teste 7 no
   saldo, bloqueio de atendente, livro de movimentações imutável, isolamento entre pizzarias (Teste 11),
   fornecedores e auditoria.
+- **Banco (SQL, Fase 2):** Teste 1 (10 kg + 5 kg = 15 kg), Teste 7 no recebimento, custo médio (39,00 e 35,25),
+  nota fiscal duplicada, validade obrigatória e lote vencido bloqueado, conversão com mais de 4 casas,
+  reenvio de recebimento e de ajuste, saldo insuficiente no lote, descarte de vencido como `vencimento`,
+  reconciliação entre saldo do insumo e soma dos lotes, e isolamento de leitura.
 
 ## Segurança
 
@@ -86,19 +94,25 @@ Cobertura atual:
 
 | Fase | Escopo | Estado |
 | --- | --- | --- |
-| 1 — Fundação | Autenticação, organização, categorias, unidades e conversões, fornecedores (base), insumos com saldo inicial, livro de movimentações, RLS | **Em andamento** |
-| 2 — Estoque | Recebimentos, lotes e validade (FEFO), movimentações, alertas | Pendente |
+| 1 — Fundação | Autenticação, organização, categorias, unidades e conversões, fornecedores (base), insumos com saldo inicial, livro de movimentações, RLS | Concluída |
+| 2 — Estoque | Fornecedores, recebimentos com NF e lotes, validade (FEFO), custo médio, ajustes por lote, histórico e alertas | Concluída |
 | 3 — Produção | Fichas técnicas, conversões de receita, produção por lote, pizzas meio a meio | Pendente |
 | 4 — Vendas | Pedidos, baixa na venda ou na produção, cancelamentos e estornos | Pendente |
 | 5 — Gestão | Custos, inventário físico, perdas, relatórios, dashboard, sugestão de compras | Pendente |
 | 6 — Qualidade | Testes de fluxo, segurança, desempenho, publicação Android | Pendente |
 
-### Pendências conhecidas da Fase 1
+### Pendências conhecidas
 
-- Telas autenticadas (Estoque e Cadastro) foram compiladas e exportadas, mas não foram exercitadas contra um
-  projeto Supabase real.
+- Nenhuma tela autenticada foi exercitada contra um projeto Supabase real. As telas foram compiladas
+  (bundle Android e web) e a lógica de cada RPC foi testada no banco local.
 - Tipos do banco em `src/data/types.ts` foram escritos à mão. Regenere com `supabase gen types typescript`
   quando houver projeto vinculado.
-- Concorrência de baixa de estoque (Teste 10) depende de consumo, então entra na Fase 2.
-- Cadastro de fornecedores pela interface chega na Fase 2 (hoje só pelo banco).
-- Permissões por ação além de cadastro (matriz completa de papéis) entram nas fases seguintes.
+- Estorno de recebimento não está implementado. Correções hoje são ajustes com motivo.
+- O saldo inicial de um insumo entra como lote `SALDO-INICIAL` sem validade, porque a data não é conhecida.
+- Custo médio muda só em recebimentos. Ajustes mantêm o custo médio atual.
+- Teste 10 (concorrência): a baixa usa `FOR UPDATE` no insumo e nos lotes, mas o teste de concorrência real
+  (duas sessões simultâneas) ainda não foi escrito. Entra junto com o consumo na Fase 3.
+- Inventário físico (Teste 9) e desperdícios entram na Fase 5.
+- Permissões por ação além de cadastro e recebimento (matriz completa de papéis) entram nas fases seguintes.
+- Nenhum lote de consumo de produção existe ainda, então o bloqueio de lote vencido para consumo normal
+  vale para ajustes e para recebimentos. Vale para produção quando ela existir.
