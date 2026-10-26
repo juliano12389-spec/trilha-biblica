@@ -4,7 +4,7 @@ Aplicativo Android (Expo + React Native + TypeScript) com backend Supabase (Post
 para controlar o estoque de uma pizzaria: insumos, unidades, validade, movimentações e, nas próximas
 fases, recebimentos, fichas técnicas, produção, vendas, inventário e custos.
 
-**Status:** Fases 1 (Fundação), 2 (Estoque), 3 (Produção) e 4 (Vendas) concluídas. Veja [Fases](#fases).
+**Status:** Fases 1 a 5 concluídas (Fundação, Estoque, Produção, Vendas e Gestão). Veja [Fases](#fases).
 
 ## Regras centrais
 
@@ -59,6 +59,7 @@ Migrações, nesta ordem:
 2. `20261027120000_fase2_estoque.sql` — recebimentos, lotes, ajustes, custo médio e saldo por lote.
 3. `20261028120000_fase3_producao.sql` — produtos, fichas técnicas com versões, preparos e baixa FEFO.
 4. `20261029120000_fase4_vendas.sql` — vendas por canal, modos de baixa, cancelamento com recuperação e estoque pronto.
+5. `20261030120000_fase5_gestao.sql` — inventário com aprovação, perdas, relatórios, sugestão de compras e painel.
 
 ## Testes
 
@@ -100,7 +101,7 @@ Cobertura atual:
 | 2 — Estoque | Fornecedores, recebimentos com NF e lotes, validade (FEFO), custo médio, ajustes por lote, histórico e alertas | Concluída |
 | 3 — Produção | Produtos, fichas técnicas com versões, preparos por lote, pizzas meio a meio, baixa FEFO e custo congelado | Concluída |
 | 4 — Vendas | Vendas por canal, modo de baixa na venda ou na produção, cancelamento com recuperação, estoque de pizzas prontas | Concluída |
-| 5 — Gestão | Custos, inventário físico, perdas, relatórios, dashboard, sugestão de compras | Pendente |
+| 5 — Gestão | Custos por pizza, inventário com aprovação, perdas, consumo teórico x real, relatórios, painel e sugestão de compras | Concluída |
 | 6 — Qualidade | Testes de fluxo, segurança, desempenho, publicação Android | Pendente |
 
 ### Regras de produção
@@ -129,6 +130,20 @@ Cobertura atual:
   externo (delivery), devolve a venda já registrada.
 - **Número do pedido** é sequencial por pizzaria. Vendas recusadas não consomem número.
 
+### Regras de gestão
+
+- **Inventário:** contar não muda o saldo. A contagem vai para aprovação do administrador. Divergência exige
+  motivo. Na aprovação, a diferença é aplicada ao saldo do momento (não ao da contagem). Cada ajuste vira um
+  movimento com motivo e referência da contagem. Contagem recusada não muda nada.
+- **Perdas:** saem do lote que vence primeiro, ou de um lote escolhido. O custo estimado usa o custo médio.
+  Motivo obrigatório.
+- **Custo por pizza:** custo de ingredientes pelo custo médio atual da ficha. Não é lucro. Mão de obra,
+  aluguel, energia, impostos e taxas de entrega não entram.
+- **Consumo teórico x real:** teórico = fichas x pizzas líquidas (sem o que voltou por cancelamento) e insumos
+  de preparos. Real = baixas no livro. A diferença é perda e ajuste.
+- **Sugestão de compras:** consumo real dos últimos 30 dias x (prazo do fornecedor + 7 dias), mais o mínimo,
+  menos o saldo.
+
 ### Pendências conhecidas
 
 - Nenhuma tela autenticada foi exercitada contra um projeto Supabase real. As telas foram compiladas
@@ -144,7 +159,13 @@ Cobertura atual:
 - Permissões por ação além de cadastro e recebimento (matriz completa de papéis) entram nas fases seguintes.
 - Cancelamento de ordem de produção avulsa não existe. Só as vendas são canceláveis.
 - Vendas têm uma forma de pagamento por venda. Não há pagamento parcial nem troco.
-- Relatórios de custo das vendas (custo real x preço) são da Fase 5.
+- Custo real das vendas (custo registrado x preço) ainda não tem relatório próprio. Existem o custo teórico e o
+  custo de cada ordem.
+- Exportação em CSV e PDF não existe ainda. Os dados estão nas telas de relatório.
+- A RPC de prazo de entrega do fornecedor existe e está testada, mas ainda não há tela para editá-lo.
+- Não há pedidos de compra. A sugestão não desconta compras já feitas.
+- Custo médio muda só em recebimentos e preparos. Ajustes e perdas mantêm o custo médio.
+- Relatórios não têm período customizado nem filtros por responsável.
 - Mudança de modo com vendas em andamento não tem trava própria. Só a trava das pizzas prontas existe.
 - Custo teórico da ficha (pelo custo médio atual) não tem tela própria. O custo registrado é o da ordem.
 - Ao cadastrar um preparo, o cadastro e a publicação da ficha são duas chamadas. Se a publicação falhar, o
