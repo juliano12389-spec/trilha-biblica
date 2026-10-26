@@ -34,6 +34,7 @@ export interface IngredientRow {
   category_id: string;
   purchase_unit: UnitCode;
   stock_unit: UnitCode;
+  consumption_unit: UnitCode;
   minimum_stock: string | number;
   purchase_unit_cost: string | number;
   shelf_life_days: number | null;

@@ -4,7 +4,7 @@ Aplicativo Android (Expo + React Native + TypeScript) com backend Supabase (Post
 para controlar o estoque de uma pizzaria: insumos, unidades, validade, movimentações e, nas próximas
 fases, recebimentos, fichas técnicas, produção, vendas, inventário e custos.
 
-**Status:** Fase 1 (Fundação) e Fase 2 (Estoque) concluídas. Veja [Fases](#fases).
+**Status:** Fases 1 (Fundação), 2 (Estoque) e 3 (Produção) concluídas. Veja [Fases](#fases).
 
 ## Regras centrais
 
@@ -57,6 +57,7 @@ Migrações, nesta ordem:
 
 1. `20261026120000_fase1_fundacao.sql` — organizações, perfis, insumos, livro de movimentações.
 2. `20261027120000_fase2_estoque.sql` — recebimentos, lotes, ajustes, custo médio e saldo por lote.
+3. `20261028120000_fase3_producao.sql` — produtos, fichas técnicas com versões, preparos e baixa FEFO.
 
 ## Testes
 
@@ -96,10 +97,21 @@ Cobertura atual:
 | --- | --- | --- |
 | 1 — Fundação | Autenticação, organização, categorias, unidades e conversões, fornecedores (base), insumos com saldo inicial, livro de movimentações, RLS | Concluída |
 | 2 — Estoque | Fornecedores, recebimentos com NF e lotes, validade (FEFO), custo médio, ajustes por lote, histórico e alertas | Concluída |
-| 3 — Produção | Fichas técnicas, conversões de receita, produção por lote, pizzas meio a meio | Pendente |
+| 3 — Produção | Produtos, fichas técnicas com versões, preparos por lote, pizzas meio a meio, baixa FEFO e custo congelado | Concluída |
 | 4 — Vendas | Pedidos, baixa na venda ou na produção, cancelamentos e estornos | Pendente |
 | 5 — Gestão | Custos, inventário físico, perdas, relatórios, dashboard, sugestão de compras | Pendente |
 | 6 — Qualidade | Testes de fluxo, segurança, desempenho, publicação Android | Pendente |
+
+### Regras de produção
+
+- **Ficha técnica:** cada sabor tem uma ficha por tamanho. Publicar cria uma versão nova e imutável.
+  Ordens guardam a versão usada e o custo médio dos insumos no momento da baixa.
+- **Meio a meio:** itens marcados como *metade* contam 50% de cada sabor. Itens *inteira* (massa, caixa)
+  são descontados uma vez, pela maior quantidade entre os dois sabores.
+- **Baixa FEFO:** lotes vencidos ficam fora. Se faltar algum insumo, nada é baixado e a mensagem lista
+  cada faltante com o que é necessário e o que está disponível.
+- **Preparos:** consomem os insumos da ficha e geram um lote de saída. A perda é a diferença entre o
+  rendimento esperado e o real, e o custo do lote é o custo dos insumos gastos.
 
 ### Pendências conhecidas
 
@@ -114,5 +126,12 @@ Cobertura atual:
   (duas sessões simultâneas) ainda não foi escrito. Entra junto com o consumo na Fase 3.
 - Inventário físico (Teste 9) e desperdícios entram na Fase 5.
 - Permissões por ação além de cadastro e recebimento (matriz completa de papéis) entram nas fases seguintes.
+- Pizzas produzidas não geram estoque de produto acabado. O registro é de ordem com custo. Estoque de produto
+  acabado e baixa na venda entram na Fase 4, junto com as vendas.
+- Cancelamento e estorno de produção não existem ainda (Fase 4).
+- Custo teórico da ficha (pelo custo médio atual) não tem tela própria. O custo registrado é o da ordem.
+- Ao cadastrar um preparo, o cadastro e a publicação da ficha são duas chamadas. Se a publicação falhar, o
+  preparo fica sem ficha e pode ser publicado depois em Fichas técnicas.
+- A suíte SQL da Fase 3 não tem teste de concorrência real (duas ordens simultâneas no mesmo insumo).
 - Nenhum lote de consumo de produção existe ainda, então o bloqueio de lote vencido para consumo normal
   vale para ajustes e para recebimentos. Vale para produção quando ela existir.

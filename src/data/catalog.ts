@@ -10,6 +10,7 @@ export interface IngredientListItem {
   categoryName: string;
   stockUnit: IngredientDraft['stockUnit'];
   purchaseUnit: IngredientDraft['purchaseUnit'];
+  consumptionUnit: IngredientDraft['consumptionUnit'];
   balance: Decimal;
   minimumStock: Decimal;
   purchaseUnitCost: Decimal;
@@ -25,7 +26,7 @@ export async function listIngredients(): Promise<IngredientListItem[]> {
   const [ingredientsResult, balancesResult] = await Promise.all([
     supabase
       .from('ingredients')
-      .select('id, sku, name, category_id, purchase_unit, stock_unit, minimum_stock, purchase_unit_cost, shelf_life_days, is_active, ingredient_categories(name)')
+      .select('id, sku, name, category_id, purchase_unit, stock_unit, consumption_unit, minimum_stock, purchase_unit_cost, shelf_life_days, is_active, ingredient_categories(name)')
       .eq('is_active', true)
       .order('name'),
     supabase.from('ingredient_balances').select('ingredient_id, balance'),
@@ -45,6 +46,7 @@ export async function listIngredients(): Promise<IngredientListItem[]> {
     categoryName: row.ingredient_categories?.name ?? 'Sem categoria',
     stockUnit: row.stock_unit,
     purchaseUnit: row.purchase_unit,
+    consumptionUnit: row.consumption_unit,
     balance: balances.get(row.id) ?? Decimal.ZERO,
     minimumStock: Decimal.of(row.minimum_stock),
     purchaseUnitCost: Decimal.of(row.purchase_unit_cost),
