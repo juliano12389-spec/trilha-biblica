@@ -14,8 +14,6 @@ import { useLoader } from '../../hooks/useLoader';
 import { colors, space } from '../../theme';
 
 const UPCOMING = [
-  { icon: 'restaurant-outline', title: 'Fichas técnicas e produção', phase: 'Fase 3' },
-  { icon: 'receipt-outline', title: 'Vendas, cancelamentos e estornos', phase: 'Fase 4' },
   { icon: 'stats-chart-outline', title: 'Custos, inventário, perdas e relatórios', phase: 'Fase 5' },
 ] as const;
 
@@ -120,6 +118,10 @@ export default function InicioScreen() {
         <View style={styles.actions}>
           <Button label="Recebimento" icon="download-outline" onPress={() => router.push('/recebimento/novo')} style={styles.actionButton} />
           <Button label="Novo insumo" variant="secondary" icon="add" onPress={() => router.push('/insumo/novo')} style={styles.actionButton} />
+        </View>
+        <View style={styles.actions}>
+          <Button label="Produzir" variant="secondary" icon="restaurant-outline" onPress={() => router.push('/producao/pizza')} style={styles.actionButton} />
+          <Button label="Vendas" variant="secondary" icon="receipt-outline" onPress={() => router.push('/vendas')} style={styles.actionButton} />
         </View>
 
         <Card>
