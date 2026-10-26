@@ -4,7 +4,7 @@ Aplicativo Android (Expo + React Native + TypeScript) com backend Supabase (Post
 para controlar o estoque de uma pizzaria: insumos, unidades, validade, movimentações e, nas próximas
 fases, recebimentos, fichas técnicas, produção, vendas, inventário e custos.
 
-**Status:** Fases 1 (Fundação), 2 (Estoque) e 3 (Produção) concluídas. Veja [Fases](#fases).
+**Status:** Fases 1 (Fundação), 2 (Estoque), 3 (Produção) e 4 (Vendas) concluídas. Veja [Fases](#fases).
 
 ## Regras centrais
 
@@ -58,6 +58,7 @@ Migrações, nesta ordem:
 1. `20261026120000_fase1_fundacao.sql` — organizações, perfis, insumos, livro de movimentações.
 2. `20261027120000_fase2_estoque.sql` — recebimentos, lotes, ajustes, custo médio e saldo por lote.
 3. `20261028120000_fase3_producao.sql` — produtos, fichas técnicas com versões, preparos e baixa FEFO.
+4. `20261029120000_fase4_vendas.sql` — vendas por canal, modos de baixa, cancelamento com recuperação e estoque pronto.
 
 ## Testes
 
@@ -98,7 +99,7 @@ Cobertura atual:
 | 1 — Fundação | Autenticação, organização, categorias, unidades e conversões, fornecedores (base), insumos com saldo inicial, livro de movimentações, RLS | Concluída |
 | 2 — Estoque | Fornecedores, recebimentos com NF e lotes, validade (FEFO), custo médio, ajustes por lote, histórico e alertas | Concluída |
 | 3 — Produção | Produtos, fichas técnicas com versões, preparos por lote, pizzas meio a meio, baixa FEFO e custo congelado | Concluída |
-| 4 — Vendas | Pedidos, baixa na venda ou na produção, cancelamentos e estornos | Pendente |
+| 4 — Vendas | Vendas por canal, modo de baixa na venda ou na produção, cancelamento com recuperação, estoque de pizzas prontas | Concluída |
 | 5 — Gestão | Custos, inventário físico, perdas, relatórios, dashboard, sugestão de compras | Pendente |
 | 6 — Qualidade | Testes de fluxo, segurança, desempenho, publicação Android | Pendente |
 
@@ -113,6 +114,21 @@ Cobertura atual:
 - **Preparos:** consomem os insumos da ficha e geram um lote de saída. A perda é a diferença entre o
   rendimento esperado e o real, e o custo do lote é o custo dos insumos gastos.
 
+### Regras de vendas
+
+- **Modo de baixa** (administrador, em Vendas > Configurar modo):
+  - *Baixa na produção* (padrão): a produção baixa os ingredientes e gera pizzas prontas. A venda consome só as
+    pizzas prontas e nunca baixa ingredientes.
+  - *Baixa na venda*: a venda baixa os ingredientes pela ficha, pelo mesmo motor FEFO. Produção avulsa de pizzas
+    fica bloqueada. Não é permitido mudar para esse modo enquanto houver pizzas prontas.
+- **Meio a meio** é vendido pela média dos dois sabores, arredondada a centavos.
+- **Cancelamento:** informa-se quantas pizzas de cada item foram recuperadas. No modo baixa na venda, a fração
+  recuperada de cada consumo volta para os mesmos lotes. No modo baixa na produção, as pizzas recuperadas voltam
+  ao estoque pronto. Ingredientes gastos e pizzas descartadas nunca voltam.
+- **Idempotência:** reenvio com o mesmo identificador da solicitação, ou com o mesmo número de pedido de um canal
+  externo (delivery), devolve a venda já registrada.
+- **Número do pedido** é sequencial por pizzaria. Vendas recusadas não consomem número.
+
 ### Pendências conhecidas
 
 - Nenhuma tela autenticada foi exercitada contra um projeto Supabase real. As telas foram compiladas
@@ -126,9 +142,10 @@ Cobertura atual:
   (duas sessões simultâneas) ainda não foi escrito. Entra junto com o consumo na Fase 3.
 - Inventário físico (Teste 9) e desperdícios entram na Fase 5.
 - Permissões por ação além de cadastro e recebimento (matriz completa de papéis) entram nas fases seguintes.
-- Pizzas produzidas não geram estoque de produto acabado. O registro é de ordem com custo. Estoque de produto
-  acabado e baixa na venda entram na Fase 4, junto com as vendas.
-- Cancelamento e estorno de produção não existem ainda (Fase 4).
+- Cancelamento de ordem de produção avulsa não existe. Só as vendas são canceláveis.
+- Vendas têm uma forma de pagamento por venda. Não há pagamento parcial nem troco.
+- Relatórios de custo das vendas (custo real x preço) são da Fase 5.
+- Mudança de modo com vendas em andamento não tem trava própria. Só a trava das pizzas prontas existe.
 - Custo teórico da ficha (pelo custo médio atual) não tem tela própria. O custo registrado é o da ordem.
 - Ao cadastrar um preparo, o cadastro e a publicação da ficha são duas chamadas. Se a publicação falhar, o
   preparo fica sem ficha e pode ser publicado depois em Fichas técnicas.
